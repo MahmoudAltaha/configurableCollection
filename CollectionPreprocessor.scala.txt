@@ -1,0 +1,124 @@
+import scala.annotation.tailrec
+
+
+class Collection[A](
+#ifdef CAPACITY
+val capacity: Int
+#endif //CAPACITY
+)
+#ifdef defined PRIORITY
+(implicit val ordering: Ordering[A])
+#endif //PRIORITY
+{
+  private var elements: List[A] = Nil
+
+  def push(element: A): Boolean = {
+#ifdef CAPACITY
+    if (size >= x) {
+#ifdef LOGGING
+      println("Failed to push element.")
+#endif //LOGGING
+      return false
+    }
+#endif //CAPACITY
+
+#ifdef UNIQUENESS
+    @tailrec
+    def hasElement(e: A, l: List[A]): Boolean = {
+      l match {
+        case Nil => false
+        case list =>
+          if (e == list.head) {
+            true
+          } else {
+            hasElement(e, list.tail)
+          }
+      }
+#endif //UNIQUENESS
+
+      if (hasElement(element, elements)) {
+#ifdef LOGGING
+        println("Failed to push element.")
+#endif //LOGGING
+        return false
+      }
+    }
+
+#ifdef LOGGING
+    println(s"Pushing element $element.")
+#endif //LOGGING
+
+#if defined FIFO || defined LIFO
+    elements = element :: elements
+#elif defined PRIORITY
+    def insert(e: A, l: List[A]): List[A] = {
+      l match {
+        case ::(head, next) =>
+          if (ordering.lteq(e, head)) {
+            element :: l
+          } else {
+            head :: insert(e, next)
+          }
+        case Nil => e :: Nil
+      }
+    }
+    elements = insert(element, elements)
+#endif
+
+    true
+  }
+
+  def pop(): Option[A] = {
+    if (elements == Nil) {
+#ifdef LOGGING
+      println("Collection is empty.")
+#endif //LOGGING
+      return None
+    }
+
+#ifdef FIFO
+    val head = elements.reverse.head
+    elements = elements.reverse.tail.reverse
+    head
+#elif defined LIFO || defined PRIORITY
+    val head = elements.head
+    elements = elements.tail
+    head
+#endif
+
+#ifdef LOGGING
+    println(s"Popping element $head.")
+#endif //LOGGING
+
+    Some(head)
+  }
+
+  def peek(): Option[A] = {
+    if (elements == Nil) {
+#ifdef LOGGING
+      println("Collection is empty.")
+#endif //LOGGING
+      return None
+    }
+
+#ifdef FIFO
+    elements.reverse.head
+#elif defined LIFO || defined PRIORITY
+    elements.head
+#endif
+
+#ifdef LOGGING
+    println(s"Peeking element $head.")
+#endif //LOGGING
+
+    Some(head)
+  }
+
+  def size: Int = {
+#ifdef LOGGING
+    println(s"Current size is ${elements.size}.")
+#endif //LOGGING
+
+    elements.size
+  }
+}
